@@ -9,7 +9,7 @@ Imports System.Runtime.InteropServices
 ' アセンブリ属性の値を確認します
 
 <Assembly: AssemblyTitle("vbsql")>
-<Assembly: AssemblyDescription("")>
+<Assembly: AssemblyDescription("create sql and execute it.")>
 <Assembly: AssemblyCompany("")>
 <Assembly: AssemblyProduct("vbsql")>
 <Assembly: AssemblyCopyright("Copyright ©  2018")>
@@ -32,4 +32,4 @@ Imports System.Runtime.InteropServices
 ' <Assembly: AssemblyVersion("1.0.*")>
 
 <Assembly: AssemblyVersion("1.0.0.0")>
-<Assembly: AssemblyFileVersion("1.0.0.0")>
+<Assembly: AssemblyFileVersion("0.2.0.0")>
