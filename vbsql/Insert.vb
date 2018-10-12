@@ -2,36 +2,65 @@
     Private _into As String = Nothing
     Private _columns As Hashtable = Nothing
 
+    'set table
     Public Function into(table As String) As Insert
         _into = table
         Return Me
     End Function
 
-    Public Function [set](hashtable As Hashtable) As Insert
+    'set hashtable as insertdata
+    Public Function values(hashtable As Hashtable) As Insert
         _columns = hashtable
         Return Me
     End Function
 
-    'Public Function execute(connectionString As String) As Integer
-    '    checkInto()
+    'execute sql and return integer 
+    Public Function execute(connectionString As String) As Integer
+        checkInto()
+        checkColumns()
 
-    '    Return Nothing
-    'End Function
+        Dim cn As New SqlClient.SqlConnection
+        Dim sql As New SqlClient.SqlCommand
+        cn.ConnectionString = connectionString
+        sql = cn.CreateCommand
+        sql.CommandText = getSql()
+        cn.Open()
 
+        execute = sql.ExecuteScalar()
 
-    'Function getSql()
-    '    Dim sql As String = " INSERT INTO "
-    '    sql &= _into
-    '    sql &= " VALUES("
+        cn.Close()
+        sql.Dispose()
+        cn.Dispose()
+    End Function
 
-    '    Return sql
-    'End Function
-    'insert into test(text,number,date) values('number','99','2018-10-10')
+    'create sql
+    Function getSql()
+        Dim sql As String = " INSERT INTO "
+        Dim values As String = ""
+
+        sql &= _into & "("
+        For Each key As String In _columns.Keys
+            sql &= key & ","
+            values &= "'" & _columns(key) & "',"
+        Next
+        sql = sql.Substring(0, sql.Length - 1)
+        values = values.Substring(0, values.Length - 1)
+
+        sql &= ") VALUES(" & values & ")"
+        Return sql
+    End Function
+    'insert into test(text,number,Date) values('number','99','2018-10-10')
 
     'if _from is not set, throw error
     Sub checkInto()
         If IsNothing(_into) OrElse _into.Trim() = "" Then
             Throw New Exception("no table selected")
+        End If
+    End Sub
+    'check _columns
+    Sub checkColumns()
+        If IsNothing(_columns) OrElse _columns.Count = 0 Then
+            Throw New Exception("no data set")
         End If
     End Sub
 End Class
