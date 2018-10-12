@@ -13,8 +13,7 @@
 
     End Sub
 
-    Public Sub New(connectionString As String)
-        _connectionString = connectionString
-    End Sub
-
+    Public Function getconnectionString() As String
+        Return _connectionString
+    End Function
 End Class
