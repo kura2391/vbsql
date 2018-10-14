@@ -1,17 +1,31 @@
 ﻿Public Class Insert
-    Private _into As String = Nothing
-    Private _columns As Hashtable = Nothing
+    Inherits SqlAbstract
+
+    'save lastinsertid
     Private _lastInsertId As Boolean = False
+    Private _value As New Parameter("value")
+
+
+    Public Sub New(connection As Connection)
+        MyBase.New(connection)
+    End Sub
+
+    Public Sub New(connectionString As String)
+        MyBase.New(connectionString)
+    End Sub
+
 
     'set table
-    Public Function into(table As String) As Insert
-        _into = table
+    Public Function into(table As String, Optional ByVal type As SqlDbType = SqlDbType.NVarChar) As Insert
+        _table.Value = table
+        _table.DbType = type
         Return Me
     End Function
 
-    'set hashtable as insertdata
-    Public Function values(hashtable As Hashtable) As Insert
-        _columns = hashtable
+    'set insertdata
+    Public Function values(columnName As String, value As String, Optional ByVal type As SqlDbType = SqlDbType.NVarChar) As Insert
+        _value.appendParameter(columnName)
+        _value.appendParameter(value, type)
         Return Me
     End Function
 
@@ -24,57 +38,56 @@
 
     'execute sql and return integer 
     Public Function execute(connectionString As String) As Integer
-        checkInto()
-        checkColumns()
+        check()
 
-        Dim cn As New SqlClient.SqlConnection
-        Dim sql As New SqlClient.SqlCommand
-        cn.ConnectionString = connectionString
-        sql = cn.CreateCommand
-        sql.CommandText = getSql()
-        cn.Open()
-
-        execute = sql.ExecuteScalar()
-
-        cn.Close()
-        sql.Dispose()
-        cn.Dispose()
+        Dim sql As String = buildSql()
+        Return _connection.execute(sql, buildParameter())
     End Function
 
     'create sql
-    Function getSql()
-        Dim sql As String = " INSERT INTO "
+    Private Function buildSql()
+        'append table parameter to the list of sqlParameter 
+
+        Dim sql As String = "INSERT INTO @" & _table.ParameterName & " ("
         Dim values As String = ""
-
-        sql &= _into & "("
-        For Each key As String In _columns.Keys
-            sql &= key & ","
-            values &= "'" & _columns(key) & "',"
+        For i As Integer = 0 To _value.getParameterList.Count - 2 Step 2
+            sql &= "@" & _value.getParameter(i).ParameterName & ","
+            values &= "@" & _value.getParameter(i + 1).ParameterName & ","
         Next
-        sql = sql.Substring(0, sql.Length - 1)
-        values = values.Substring(0, values.Length - 1)
+        sql = sql.Substring(0, sql.Length - 1) & ") VALUES("
+        sql &= values.Substring(0, values.Length - 1) & ")"
 
-        sql &= ") VALUES(" & values & ");"
         If _lastInsertId Then
             sql &= "SELECT SCOPE_IDENTITY();"
         End If
         Return sql
     End Function
-    'insert into test(text,number,Date) values('number','99','2018-10-10')
 
-    'if _from is not set, throw error
-    Sub checkInto()
-        If IsNothing(_into) OrElse _into.Trim() = "" Then
+    Public Function buildParameter() As SqlClient.SqlParameter()
+        Dim p As New List(Of SqlClient.SqlParameter)
+        p.Add(_table)
+        p.AddRange(_value.getParameterList)
+        Return p.ToArray()
+    End Function
+
+    Private Sub check()
+        checkTable()
+        checkValues()
+        MyBase.checkConnection()
+    End Sub
+
+
+    'check table
+    Private Sub checkTable()
+        If IsNothing(_table) Then
             Throw New Exception("no table selected")
         End If
     End Sub
 
-    'check _columns
-    Sub checkColumns()
-        If IsNothing(_columns) OrElse _columns.Count = 0 Then
-            Throw New Exception("no data set")
+    Private Sub checkValues()
+        If _value.getParameterList.Count < 2 Then
+            Throw New Exception("no data inserted")
         End If
     End Sub
-
 
 End Class
