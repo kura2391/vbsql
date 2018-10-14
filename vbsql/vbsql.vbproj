@@ -64,6 +64,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Connection.vb" />
+    <Compile Include="ControllerToDb.vb" />
     <Compile Include="Delete.vb" />
     <Compile Include="Insert.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
