@@ -1,34 +1,50 @@
 ﻿Public Class Parameter
-    Private _param As List(Of SqlClient.SqlParameter)
-    Private _pre As String
-
-    Public Sub New(prefix As String)
-        _pre = prefix
-        _param = New List(Of SqlClient.SqlParameter)
-
+    'columnName
+    Private _col As String = Nothing
+    'value and type
+    Private _sqlParameter As SqlClient.SqlParameter = Nothing
+    'for where sentence
+    Public Sub New(value As String, Optional type As SqlDbType = SqlDbType.NVarChar)
+        [set](value, type)
     End Sub
-    Public Function appendParameter(value As String, Optional type As SqlDbType = SqlDbType.NVarChar) As SqlClient.SqlParameter
-        Dim p As New SqlClient.SqlParameter(_pre & _param.Count.ToString(), dbType:=type)
-        p.Value = value
-        Return p
-    End Function
-
-    Public Function getParameterList() As List(Of SqlClient.SqlParameter)
-        Return _param
-    End Function
-
-    Public Function getParameter(index As Integer) As SqlClient.SqlParameter
-        If _param.Count < index Then
-            Throw New Exception("index overflow")
-        End If
-        Return _param(index)
-    End Function
-
-    Public Sub clear()
-        _param.Clear()
+    'for update,insert sentence
+    Public Sub New(columnName As String, value As String, Optional type As SqlDbType = SqlDbType.NVarChar)
+        _col = columnName
+        [set](value, type)
+    End Sub
+    'for just instance
+    Public Sub New()
     End Sub
 
-    Public Function count() As Integer
-        Return _param.Count()
+    'set value and type at where sentence
+    Public Sub [set](value As String, Optional type As SqlDbType = SqlDbType.NVarChar)
+        _sqlParameter = New SqlClient.SqlParameter
+        _sqlParameter.Value = value
+        _sqlParameter.SqlDbType = type
+    End Sub
+
+    'set columnName , value and value type at update and select sentence
+    Public Sub [set](columnName As String, value As String, Optional type As SqlDbType = SqlDbType.NVarChar)
+        _col = columnName
+        [set](value, type)
+    End Sub
+
+    'getter
+    Friend Function getColumnName() As String
+        Return _col
+    End Function
+
+    'setter
+    Friend Sub setParameterName(paramname As String)
+        _sqlParameter.ParameterName = paramname
+    End Sub
+    'getter
+    Friend Function getParameterName() As String
+        Return _sqlParameter.ParameterName
+    End Function
+
+    'getter
+    Friend Function getSqlParameter()
+        Return _sqlParameter
     End Function
 End Class
