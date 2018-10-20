@@ -81,8 +81,11 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <Compile Include="Parameter.vb" />
     <Compile Include="Select.vb" />
+    <Compile Include="SqlAbstract.vb" />
     <Compile Include="Update.vb" />
+    <Compile Include="Where.vb" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="My Project\Resources.resx">

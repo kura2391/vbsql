@@ -1,54 +1,63 @@
 ﻿Public Class Delete
-    Private _from As String
-    Private _where As String
+    Inherits SqlAbstract
+
+
+    Private _where As New Where()
+
+    Public Sub New(connection As Connection)
+        MyBase.New(connection)
+    End Sub
+    Public Sub New(connectionString As String)
+        MyBase.New(connectionString)
+    End Sub
+
 
     'set from
     Public Function from(table As String) As Delete
-        _from = table
+        _table = table
         Return Me
     End Function
 
     ' set where
-    Public Function where(conditions As String) As Delete
-        _where = conditions
+    Public Function where(conditions As String, col As Parameter()) As Delete
+        _where.add(conditions, col)
+        Return Me
+    End Function
+    ' set where
+    Public Function where(conditions As String, col() As String) As Delete
+        _where.add(conditions, col)
         Return Me
     End Function
 
     'execute sql and return integer 
-    Public Function execute(connectionString As String) As Integer
-        checkFrom()
-
-        Dim cn As New SqlClient.SqlConnection
-        Dim sql As New SqlClient.SqlCommand
-        cn.ConnectionString = connectionString
-        sql = cn.CreateCommand
-        sql.CommandText = getSql()
-        cn.Open()
-
-        execute = sql.ExecuteScalar()
-
-        cn.Close()
-        sql.Dispose()
-        cn.Dispose()
+    Public Function execute() As Integer
+        check()
+        Return _connection.execute(buildSql(), buildParameter())
     End Function
 
-    Function getSql()
+
+    Private Function buildParameter() As SqlClient.SqlParameter()
+        Dim p As New List(Of SqlClient.SqlParameter)
+        p.AddRange(_where.getParamList())
+        Return p.ToArray()
+    End Function
+
+    Private Function buildSql()
         Dim sql As String = " DELETE FROM "
-        sql &= _from
-        If Not IsNothing(_where) Then
+        sql &= _table
+
+        If Not _where.isEmpty() Then
             sql &= " WHERE "
-            sql &= _where
+            sql &= _where.sql()
         End If
         Return sql
     End Function
 
 
-    'check from
-    Public Sub checkFrom()
-        If IsNothing(_from) OrElse _from.Trim() = "" Then
-            Throw New Exception("no table selected")
-        End If
+    Private Sub check()
+        checkConnection()
     End Sub
+
 
 
 End Class

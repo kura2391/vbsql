@@ -1,62 +1,99 @@
 ﻿
 Public Class [Select]
-        Private _columns As String = "*"
-        Private _from As String = Nothing
-        Private _where As String = Nothing
-        Private _order As String = Nothing
+    Inherits SqlAbstract
+    Private _select As String()
+    Private _where As New Where()
+    Private _order As String = Nothing
 
-        'set table
-        Public Function from(table As String) As [Select]
-            _from = table
-            Return Me
-        End Function
-        'set Columns
-        Public Function [select](columns As String) As [Select]
-            _columns = columns
-            Return Me
-        End Function
-        'set Where
-        Public Function where(conditions As String) As [Select]
-            _where = conditions
-            Return Me
-        End Function
 
-        'set OrderBy
-        Public Function orderBy(order As String) As [Select]
-            _order = order
-            Return Me
-        End Function
+    Public Sub New(connection As Connection)
+        MyBase.New(connection)
+    End Sub
 
-        'execute sql and get data as DataTable
-        Public Function execute(connectionString As String) As DataTable
-            checkFrom()
-            Dim dt As New DataTable()
-            Dim da = New SqlClient.SqlDataAdapter(Me.getSql, connectionString)
-            da.Fill(dt)
-            Return dt
-        End Function
+    Public Sub New(connectionString As String)
+        MyBase.New(connectionString)
+    End Sub
 
-        'create sql sentence 
-        Private Function getSql() As String
-            Dim sql As String = "SELECT "
-            sql &= _columns
-            sql &= " FROM "
-            sql &= _from
-            If Not IsNothing(_where) Then
-                sql &= " WHERE "
-                sql &= _where
-            End If
-            If Not IsNothing(_order) Then
-                sql &= " ORDER BY "
-                sql &= _order
-            End If
-            Return sql
-        End Function
+    'set table
+    Public Function from(table As String) As [Select]
+        _table = table
+        Return Me
+    End Function
+    'set Columns
+    Public Function [select](Optional ByVal columns As String() = Nothing) As [Select]
+        ReDim Preserve _select(columns.Length - 1)
+        Array.Copy(columns, _select, columns.Length)
+        Return Me
+    End Function
 
-        'if _from is not set, throw error
-        Private Sub checkFrom()
-            If IsNothing(_from) OrElse _from.Trim() = "" Then
-                Throw New Exception("no table selected")
-            End If
-        End Sub
+    'set Where
+
+    Public Function where(conditions As String, col() As Parameter) As [Select]
+        _where.add(conditions, col)
+        Return Me
+    End Function
+    Public Function where(conditions As String, col() As String) As [Select]
+        _where.add(conditions, col)
+        Return Me
+    End Function
+
+    'set OrderBy
+    Public Function orderBy(order As String) As [Select]
+        _order = order
+        Return Me
+    End Function
+
+
+    'execute sql and get data as DataTable
+    Public Function execute() As DataTable
+        check()
+        Return _connection.executeSelect(buildSql, buildParameter())
+    End Function
+
+    'create sql sentence 
+    Private Function buildSql() As String
+        Dim sql As String = "SELECT "
+
+        If IsNothing(_select) Then
+            sql &= " * "
+        Else
+            For i As Integer = 0 To _select.count - 1
+                sql &= "" & _select(i) & " ,"
+            Next
+            sql = sql.Substring(0, sql.Length - 1)
+        End If
+
+
+        sql &= " FROM " & _table
+        sql &= " "
+        If Not _where.isEmpty() Then
+            sql &= " WHERE "
+            sql &= _where.sql()
+        End If
+        If Not IsNothing(_order) Then
+            sql &= " ORDER BY "
+            sql &= _order
+        End If
+        Return sql
+    End Function
+
+    Private Function buildParameter() As SqlClient.SqlParameter()
+        Dim p As New List(Of SqlClient.SqlParameter)
+
+        p.AddRange(_where.getParamList().ToArray())
+
+        Return p.ToArray()
+    End Function
+
+    'if _from is not set, throw error
+    Private Sub check()
+        checkFrom()
+        checkConnection()
+    End Sub
+
+    Private Sub checkFrom()
+        If IsNothing(_table) OrElse _table.Trim() = "" Then
+            Throw New Exception("no table selected")
+        End If
+    End Sub
 End Class
