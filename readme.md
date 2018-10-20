@@ -9,16 +9,18 @@ vbsqlは、visual basicでのsqlserver接続とsql文実行を手助けします
 * ビルド後、作成された.dllファイルを、インストールしたいプロジェクトの参照に追加します。
 
 ## 使い方
+
 VbSql.Connection
-'''vb
+
+~~~vb
 'connectionString ... sqlserver接続文字列
 Dim conn as new VbSql.Connection(connectionString)
 'or あまり変わりませんが...
 Dim connection As New Connection("server", "userid", "password", "initialCatalog")
-'''
+~~~
 
 VbSql.Select
-'''vb
+```vb
 'conn ... VbSql.Connection クラス
 Dim select As New vbsql.Select(conn)
 select.from("test") ' table名
@@ -26,10 +28,10 @@ select.select({"*"}) ' 列名をString()で指定　例 {"id","date","text"}
 select.where("id = ? and date > ?",{"500","2018-10-9"}) ' 変数を ? で、第二引数にその値をString()で。
 select.orderBy("date asc") 'Order By句をstringで
 Dim dt as DataTable = sel.execute() '結果がDataTableとして返されます
-'''
+```
 
 VbSql.Update
-'''vb
+```vb
 Dim update As New vbsql.Update(connection)
 
 Dim param As New Dictionary(Of String, String) 'setする値をDictionary で保存します
@@ -40,10 +42,10 @@ update.table("test") ' table名の指定
 update.set(param) ' 先ほどのparameterをセット
 update.where("id = ? AND date = ?", {"1003", "2018-10-15"}) '条件を記入
 update.execute() 
-'''
+```
 
 VbSql.Insert
-'''vb
+```vb
 
 Dim ins As New Vbsql.Insert(connection)
 
@@ -55,13 +57,13 @@ ins.values(param) ' 上述のパラメータを設定
 ins.lastInsertId() ' これにより、返り値がLastInsertidの値(select SCOPE_IDENTITY()の値)になります
 dim lastinsertid as Integer = ins.execute()
 
-'''
+```
 
 VbSql.Delete
-'''vb
+```vb
 Dim delete As New vbsql.Delete(connection)
 
 'delete,insert,select,update文はこのようにくっつけて実行もできます
 delete.from("test").where("id = ?", {"1003"}).execute() 
 
-'''
+```
