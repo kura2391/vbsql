@@ -29,6 +29,14 @@
             Return Me
         End Function
 
+        Public Function values(paramList As Dictionary(Of String, String)) As Insert
+            Dim param As New List(Of Parameter)
+            For Each key As String In paramList.Keys
+                param.Add(New Parameter(key, paramList(key)))
+            Next
+            Return values(param)
+        End Function
+
         'set lastInsertId
         Public Function lastInsertId() As Insert
             _lastInsertId = True
