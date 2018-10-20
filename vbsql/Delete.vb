@@ -2,7 +2,7 @@
     Inherits SqlAbstract
 
 
-    Private _where As New Where("where")
+    Private _where As New Where()
 
     Public Sub New(connection As Connection)
         MyBase.New(connection)
@@ -13,20 +13,24 @@
 
 
     'set from
-    Public Function from(table As String, Optional ByVal type As SqlDbType = SqlDbType.NVarChar) As Delete
-        _table.Value = table
-        _table.DbType = type
+    Public Function from(table As String) As Delete
+        _table = table
         Return Me
     End Function
 
     ' set where
-    Public Function where(conditions As String, col As String()) As Delete
-        _where.set(conditions, col)
+    Public Function where(conditions As String, col As Parameter()) As Delete
+        _where.add(conditions, col)
+        Return Me
+    End Function
+    ' set where
+    Public Function where(conditions As String, col() As String) As Delete
+        _where.add(conditions, col)
         Return Me
     End Function
 
     'execute sql and return integer 
-    Public Function execute(connectionString As String) As Integer
+    Public Function execute() As Integer
         check()
         Return _connection.execute(buildSql(), buildParameter())
     End Function
@@ -34,14 +38,13 @@
 
     Private Function buildParameter() As SqlClient.SqlParameter()
         Dim p As New List(Of SqlClient.SqlParameter)
-        p.Add(_table)
-        p.AddRange(_where.getParameterList())
+        p.AddRange(_where.getParamList())
         Return p.ToArray()
     End Function
 
     Private Function buildSql()
-        Dim sql As String = " DELETE FROM @"
-        sql &= _table.ParameterName
+        Dim sql As String = " DELETE FROM "
+        sql &= _table
 
         If Not _where.isEmpty() Then
             sql &= " WHERE "
@@ -50,7 +53,8 @@
         Return sql
     End Function
 
-    Public Sub check()
+
+    Private Sub check()
         checkConnection()
     End Sub
 

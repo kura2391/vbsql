@@ -1,8 +1,8 @@
 ﻿
 Public Class [Select]
     Inherits SqlAbstract
-    Private _select As New Parameter("select")
-    Private _where As New Where("where")
+    Private _select As String()
+    Private _where As New Where()
     Private _order As String = Nothing
 
 
@@ -15,27 +15,27 @@ Public Class [Select]
     End Sub
 
     'set table
-    Public Function from(table As String, Optional ByVal type As SqlDbType = SqlDbType.NVarChar) As [Select]
-        MyBase._table.Value = table
-        MyBase._table.DbType = type
+    Public Function from(table As String) As [Select]
+        _table = table
         Return Me
     End Function
     'set Columns
-    Public Function [select](columns As String()) As [Select]
-        _select.clear()
-        For i As Integer = 0 To columns.Count - 1
-            _select.appendParameter(columns(i), SqlDbType.NVarChar)
-        Next
+    Public Function [select](Optional ByVal columns As String() = Nothing) As [Select]
+        ReDim Preserve _select(columns.Length - 1)
+        Array.Copy(columns, _select, columns.Length)
         Return Me
     End Function
 
     'set Where
 
-    Public Function where(conditions As String, col() As String) As [Select]
-        _where.set(conditions, col)
+    Public Function where(conditions As String, col() As Parameter) As [Select]
+        _where.add(conditions, col)
         Return Me
     End Function
-
+    Public Function where(conditions As String, col() As String) As [Select]
+        _where.add(conditions, col)
+        Return Me
+    End Function
 
     'set OrderBy
     Public Function orderBy(order As String) As [Select]
@@ -45,7 +45,7 @@ Public Class [Select]
 
 
     'execute sql and get data as DataTable
-    Public Function execute(connectionString As String) As DataTable
+    Public Function execute() As DataTable
         check()
         Return _connection.executeSelect(buildSql, buildParameter())
     End Function
@@ -54,12 +54,17 @@ Public Class [Select]
     Private Function buildSql() As String
         Dim sql As String = "SELECT "
 
-        For i As Integer = 0 To _select.count - 1
-            sql &= "@" & _table.ParameterName & " ,"
-        Next
-        sql = sql.Substring(0, sql.Length - 1)
+        If IsNothing(_select) Then
+            sql &= " * "
+        Else
+            For i As Integer = 0 To _select.count - 1
+                sql &= "" & _select(i) & " ,"
+            Next
+            sql = sql.Substring(0, sql.Length - 1)
+        End If
 
-        sql &= " FROM @" & _table.ParameterName
+
+        sql &= " FROM " & _table
         sql &= " "
         If Not _where.isEmpty() Then
             sql &= " WHERE "
@@ -72,13 +77,12 @@ Public Class [Select]
         Return sql
     End Function
 
-    Private Function buildParameter()
+    Private Function buildParameter() As SqlClient.SqlParameter()
         Dim p As New List(Of SqlClient.SqlParameter)
-        p.Add(_table)
-        p.AddRange(_select.getParameterList)
-        p.AddRange(_where.getParameterList())
 
-        Return p
+        p.AddRange(_where.getParamList().ToArray())
+
+        Return p.ToArray()
     End Function
 
     'if _from is not set, throw error
@@ -88,7 +92,7 @@ Public Class [Select]
     End Sub
 
     Private Sub checkFrom()
-        If IsNothing(_table) OrElse _table.Value.Trim() = "" Then
+        If IsNothing(_table) OrElse _table.Trim() = "" Then
             Throw New Exception("no table selected")
         End If
     End Sub

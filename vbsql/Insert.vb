@@ -3,29 +3,28 @@
 
     'save lastinsertid
     Private _lastInsertId As Boolean = False
-    Private _value As New Parameter("value")
 
 
     Public Sub New(connection As Connection)
         MyBase.New(connection)
+        _prefix = "@insert"
     End Sub
 
     Public Sub New(connectionString As String)
         MyBase.New(connectionString)
+        _prefix = "@insert"
     End Sub
 
 
     'set table
-    Public Function into(table As String, Optional ByVal type As SqlDbType = SqlDbType.NVarChar) As Insert
-        _table.Value = table
-        _table.DbType = type
+    Public Function into(table As String) As Insert
+        _table = table
         Return Me
     End Function
 
     'set insertdata
-    Public Function values(columnName As String, value As String, Optional ByVal type As SqlDbType = SqlDbType.NVarChar) As Insert
-        _value.appendParameter(columnName)
-        _value.appendParameter(value, type)
+    Public Function values(ByVal paramList As List(Of Parameter)) As Insert
+        _variables = New List(Of Parameter)(paramList)
         Return Me
     End Function
 
@@ -37,24 +36,22 @@
 
 
     'execute sql and return integer 
-    Public Function execute(connectionString As String) As Integer
+    Public Function execute() As Integer
         check()
-
-        Dim sql As String = buildSql()
-        Return _connection.execute(sql, buildParameter())
+        setParameterName()
+        Return _connection.execute(buildSql(), buildParameter())
     End Function
 
     'create sql
     Private Function buildSql()
-        'append table parameter to the list of sqlParameter 
 
-        Dim sql As String = "INSERT INTO @" & _table.ParameterName & " ("
+        Dim sql As String = "INSERT INTO " & _table & " ("
         Dim values As String = ""
-        For i As Integer = 0 To _value.getParameterList.Count - 2 Step 2
-            sql &= "@" & _value.getParameter(i).ParameterName & ","
-            values &= "@" & _value.getParameter(i + 1).ParameterName & ","
+        For i As Integer = 0 To _variables.Count - 1
+            sql &= " " & _variables(i).getColumnName & " ,"
+            values &= " " & _variables(i).getParameterName & " ,"
         Next
-        sql = sql.Substring(0, sql.Length - 1) & ") VALUES("
+        sql = sql.Substring(0, sql.Length - 1) & ") VALUES ("
         sql &= values.Substring(0, values.Length - 1) & ")"
 
         If _lastInsertId Then
@@ -65,14 +62,15 @@
 
     Public Function buildParameter() As SqlClient.SqlParameter()
         Dim p As New List(Of SqlClient.SqlParameter)
-        p.Add(_table)
-        p.AddRange(_value.getParameterList)
+        For i As Integer = 0 To _variables.Count - 1
+            p.Add(_variables(i).getSqlParameter)
+        Next
         Return p.ToArray()
     End Function
 
     Private Sub check()
         checkTable()
-        checkValues()
+        checkVariables()
         MyBase.checkConnection()
     End Sub
 
@@ -84,10 +82,6 @@
         End If
     End Sub
 
-    Private Sub checkValues()
-        If _value.getParameterList.Count < 2 Then
-            Throw New Exception("no data inserted")
-        End If
-    End Sub
+
 
 End Class

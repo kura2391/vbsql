@@ -1,46 +1,60 @@
 ﻿Public Class Update
     Inherits SqlAbstract
-    Private _set As New Parameter("set")
-    Private _where As New Where("where")
+
+    Private _where As New Where()
 
     Public Sub New(connection As Connection)
         MyBase.New(connection)
+        _prefix = "@set"
     End Sub
     Public Sub New(connectionString As String)
         MyBase.New(connectionString)
+        _prefix = "@set"
     End Sub
 
 
-    Public Function update(table As String, Optional ByVal type As SqlDbType = SqlDbType.NVarChar) As Update
-        _table.Value = table
-        _table.DbType = type
+    Public Function table(tableName As String) As Update
+        _table = tableName
         Return Me
     End Function
 
-    Public Function [set](columnName As String, value As String, Optional ByVal type As SqlDbType = SqlDbType.NVarChar) As Update
-        _set.appendParameter(columnName)
-        _set.appendParameter(value, type)
+    Public Function [set](parameterList As List(Of Parameter)) As Update
+        _variables.AddRange(parameterList)
         Return Me
+    End Function
+
+    'more easier set function
+    Public Function [set](parameterList As Dictionary(Of String, String)) As Update
+        Dim param As New List(Of Parameter)
+        For Each key As String In parameterList.Keys
+            param.Add(New Parameter(key, parameterList(key)))
+        Next
+        Return [set](param)
     End Function
 
     'set where
+    Public Function where(conditions As String, col As Parameter()) As Update
+        _where.add(conditions, col)
+        Return Me
+    End Function
     Public Function where(conditions As String, col() As String) As Update
-        _where.set(conditions, col)
+        _where.add(conditions, col)
         Return Me
     End Function
 
 
     'execute sql and return integer 
-    Public Function execute(connectionString As String) As Integer
+    Public Function execute() As Integer
         check()
+        setParameterName()
         Return _connection.execute(buildSql(), buildParameter())
     End Function
 
     '
     Function buildSql() As String
-        Dim sql As String = "UPDATE @" & _table.ParameterName & " SET "
-        For i As Integer = 0 To _set.count() - 1
-            sql &= "@" & _set.getParameter(i).ParameterName & "=@" & _set.getParameter(i).Value & ","
+        Dim sql As String = "UPDATE " & _table & " SET "
+        For i As Integer = 0 To _variables.Count() - 1 Step 1
+            sql &= "" & _variables(i).getColumnName & " = " & _variables(i).getParameterName & ","
         Next
         sql = sql.Substring(0, sql.Length - 1)
         If Not _where.isEmpty() Then
@@ -51,31 +65,27 @@
 
     Private Function buildParameter() As SqlClient.SqlParameter()
         Dim p As New List(Of SqlClient.SqlParameter)
-        p.add(_table)
-        p.AddRange(_set.getParameterList)
-        p.AddRange(_where.getParameterList)
+        For i As Integer = 0 To _variables.Count - 1
+            p.Add(_variables(i).getSqlParameter)
+        Next
+        p.AddRange(_where.getParamList)
 
         Return p.ToArray()
     End Function
 
+
     Public Sub check()
         checkUpdate()
-        checkSet()
         checkConnection()
+        checkTable()
     End Sub
 
     'if _from is not set, throw error
-    Sub checkUpdate()
-        If IsNothing(_table.Value) Then
+    Private Sub checkUpdate()
+        If _table.Trim() = "" Then
             Throw New Exception("no table selected")
         End If
     End Sub
 
-    'check _set
-    Sub checkSet()
-        If IsNothing(_set) OrElse _set.count = 0 Then
-            Throw New Exception("no data set")
-        End If
-    End Sub
 
 End Class

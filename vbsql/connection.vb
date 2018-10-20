@@ -6,6 +6,15 @@
         _cnStr = connectionString
     End Sub
 
+    Public Sub New(server As String, userId As String, password As String, initialCatalog As String)
+        Dim _connectionString As String
+        _connectionString = ""
+        _connectionString &= "Server=" & server & ";"
+        _connectionString &= "User ID=" & userId & ";"
+        _connectionString &= "Password=" & password & ";"
+        _connectionString &= "Initial Catalog=" & initialCatalog
+        _cnStr = _connectionString
+    End Sub
 
     'execute delete insert update 
     Public Function execute(sql As String, values() As SqlClient.SqlParameter) As Integer
