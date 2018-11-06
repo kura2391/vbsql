@@ -104,29 +104,29 @@ Public Class [Select]
             sql &= _where.sql()
         End If
         If Not IsNothing(_order) Then
-                sql &= " ORDER BY "
-                sql &= _order
-            End If
-            Return sql
-        End Function
+            sql &= " ORDER BY "
+            sql &= _order
+        End If
+        Return sql
+    End Function
 
-        Private Function buildParameter() As SqlClient.SqlParameter()
-            Dim p As New List(Of SqlClient.SqlParameter)
+    Private Function buildParameter() As SqlClient.SqlParameter()
+        Dim p As New List(Of SqlClient.SqlParameter)
 
-            p.AddRange(_where.getParamList().ToArray())
+        p.AddRange(_where.getParamList().ToArray())
 
-            Return p.ToArray()
-        End Function
+        Return p.ToArray()
+    End Function
 
-        'if _from is not set, throw error
-        Private Sub check()
-            checkFrom()
-            checkConnection()
-        End Sub
+    'if _from is not set, throw error
+    Private Sub check()
+        checkFrom()
+        checkConnection()
+    End Sub
 
-        Private Sub checkFrom()
-            If IsNothing(_table) OrElse _table.Trim() = "" Then
-                Throw New Exception("no table selected")
-            End If
-        End Sub
+    Private Sub checkFrom()
+        If IsNothing(_table) OrElse _table.Trim() = "" Then
+            Throw New Exception("no table selected")
+        End If
+    End Sub
 End Class
