@@ -84,13 +84,4 @@ Public Class Insert
     End Sub
 
 
-    'check table
-    Private Sub checkTable()
-        If IsNothing(_table) Then
-            Throw New Exception("no table selected")
-        End If
-    End Sub
-
-
-
 End Class
