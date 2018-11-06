@@ -2,6 +2,11 @@
 
 vbsqlは、visual basicでのsqlserver接続とsql文実行を手助けします
 
+## 注意事項
+
+- 現在v0.4.0
+- DBNull.Valueを区別できないため、update,insertでNullを処理できません。いずれ実装します。
+
 ## インストール方法
 
 その1
