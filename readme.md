@@ -8,6 +8,7 @@ vbsqlは、visual basicでのsqlserver接続とsql文実行を手助けします
 * このプロジェクトをダウンロードします
 * visual studioでvbsql.slnを起動し、ビルドを実行します
 * ビルド後、作成された.dllファイルを、インストールしたいプロジェクトの参照に追加します。
+
 その2
 * インストールしたいプロジェクトの参照に、bin/release内のVbsql.dllファイルを追加します。
 
