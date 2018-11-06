@@ -1,6 +1,6 @@
-﻿Namespace VbSql
+﻿
 
-    Public Class [Select]
+Public Class [Select]
         Inherits SqlAbstract
         Private _select As String()
         Private _where As New Where()
@@ -97,5 +97,4 @@
                 Throw New Exception("no table selected")
             End If
         End Sub
-    End Class
-End Namespace
+End Class
