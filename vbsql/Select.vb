@@ -1,11 +1,18 @@
-﻿
+
+'set for Join method
+Public Enum Jointype As Integer
+    INNER
+    LEFT
+    RIGHT
+    FULL
+End Enum
 
 Public Class [Select]
         Inherits SqlAbstract
         Private _select As String()
         Private _where As New Where()
         Private _order As String = Nothing
-
+        Private _join As New List(Of String)
 
         Public Sub New(connection As Connection)
             MyBase.New(connection)
@@ -45,6 +52,26 @@ Public Class [Select]
         End Function
 
 
+        'set join
+        Public Function join(table As String, conditions As String, Optional type As Jointype = Jointype.INNER) As [Select]
+            Dim str As String = " "
+            Select Case type
+                Case Jointype.INNER
+                    str = " JOIN "
+                Case Jointype.LEFT
+                    str = " LEFT JOIN "
+                Case Jointype.RIGHT
+                    str = " RIGHT JOIN "
+                Case Jointype.FULL
+                    str = " FULL JOIN "
+            End Select
+            str &= table & " ON " & conditions
+            Me._join.Add(str)
+            Return Me
+        End Function
+
+
+
         'execute sql and get data as DataTable
         Public Function execute() As DataTable
             check()
@@ -67,6 +94,11 @@ Public Class [Select]
 
             sql &= " FROM " & _table
             sql &= " "
+            If Not _join.Count = 0 Then
+                For Each s As String In _join
+                    sql &= s
+                Next
+            End If
             If Not _where.isEmpty() Then
                 sql &= " WHERE "
                 sql &= _where.sql()
