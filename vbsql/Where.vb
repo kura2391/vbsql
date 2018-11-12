@@ -1,70 +1,47 @@
 ﻿
 Public Class Where
     'save parameter in where sentence
-    Private _param As List(Of SqlClient.SqlParameter) = Nothing
+    'Private _param As List(Of SqlClient.SqlParameter) = Nothing
+
+
     'save sql string
     Private _sql As String = Nothing
-    'save prefix of ParameterName 
-    Private _prefix As String = "@where"
-
-
+    'save parameters
+    Private _params As Parameters
 
     Public Sub New()
-        _param = New List(Of SqlClient.SqlParameter)
         _sql = ""
+
+        _params = New Parameters("@where")
     End Sub
 
     'append parameter and append sql
-    Public Sub add(conditions As String, Optional ByVal param As Parameter() = Nothing)
-
-        addParameter(param)
-
-        Dim i As Integer = 0
-        Dim j As Integer = 0
-        Dim qmark As Integer = conditions.IndexOf("?", i)
-        While qmark <> -1
-            _sql &= conditions.Substring(i, qmark - i) & "" & param(j).getParameterName
-            i = conditions.IndexOf("?", qmark) + 1
-            j += 1
-            qmark = conditions.IndexOf("?", i)
-        End While
-        _sql &= conditions.Substring(i)
-    End Sub
-
-    'more easier add function
     Public Sub add(conditions As String, Optional ByVal param As String() = Nothing)
-        Dim setParam(param.Count - 1) As Parameter
-        For i As Integer = 0 To param.Count - 1
-            setParam(i) = New Parameter(param(i))
-        Next
-        add(conditions, setParam)
-    End Sub
-
-
-    Private Sub addParameter(param() As Parameter)
-        Dim count As Integer = _param.Count
-        For i As Integer = count To count + param.Count - 1
-            param(i - count).setParameterName(_prefix & i.ToString())
-            _param.Add(param(i - count).getSqlParameter)
+        For Each p As String In param
+            _params.add(p)
         Next
 
+        _sql &= conditions
+
     End Sub
 
 
+    'build and get sql
+    Friend Function getSql() As String
+        Dim array As SqlClient.SqlParameter() = _params.getParamsArray
+        Dim ans As String = _sql
 
-    Friend Function sql() As String
-        Return _sql
+        For i As Integer = 0 To array.Length - 1
+            ans = Replace(ans, "?", array(i).ParameterName, Count:=1)
+        Next
+
+        Return ans
     End Function
 
-    Friend Function getParamList() As List(Of SqlClient.SqlParameter)
-        Return _param
+    Friend Function getParamList() As SqlClient.SqlParameter()
+        Return _params.getParamsArray
     End Function
 
-
-    Private Sub clear()
-        _param.Clear()
-        _sql = ""
-    End Sub
 
 
     Public Function isEmpty() As Boolean
