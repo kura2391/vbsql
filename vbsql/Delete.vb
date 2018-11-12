@@ -19,20 +19,15 @@ Public Class Delete
         Return Me
     End Function
 
+
     ' set where
-    Public Function where(conditions As String, col As Parameter()) As Delete
-        _where.add(conditions, col)
-        Return Me
-    End Function
-    ' set where
-    Public Function where(conditions As String, col() As String) As Delete
-        _where.add(conditions, col)
+    Public Function where(conditions As String, Optional ByVal col() As String = Nothing) As Delete
+        _where.add(conditions, param:=col)
         Return Me
     End Function
 
     'execute sql and return integer 
     Public Function execute() As Integer
-        check()
         Return _connection.execute(buildSql(), buildParameter())
     End Function
 
@@ -49,15 +44,10 @@ Public Class Delete
 
         If Not _where.isEmpty() Then
             sql &= " WHERE "
-            sql &= _where.sql()
+            sql &= _where.getSql()
         End If
         Return sql
     End Function
-
-
-    Private Sub check()
-        checkConnection()
-    End Sub
 
 
 
