@@ -9,6 +9,8 @@ Public Class Insert
     Private _columnstr As String = Nothing
     Private _valuestr As String = Nothing
 
+    'if values(dt as datatable) is used, check flag to override the columnstr by value(ht as hashtable) 
+
     Private _params As Parameters
 
     Public Sub New(connection As Connection)
@@ -34,11 +36,11 @@ Public Class Insert
     End Function
 
     ''set insertdata
-    Public Function values(ht As Hashtable) As Insert
-        If _columnstr <> "" Then
-            _columnstr &= ","
-            _valuestr &= ","
-        End If
+    Public Function value(ht As Hashtable) As Insert
+        _columnstr = ""
+        _valuestr = ""
+        _params.clear()
+
         For Each col As String In ht.Keys
 
             _columnstr &= col & ","
@@ -53,6 +55,38 @@ Public Class Insert
         Next
 
         _valuestr = _valuestr.Substring(0, _valuestr.Length - 1)
+        _columnstr = _columnstr.Substring(0, _columnstr.Length - 1)
+        Return Me
+    End Function
+
+    'values
+    Public Function values(dt As DataTable) As Insert
+        _columnstr = ""
+        _valuestr = ""
+        _params.clear()
+
+        Dim cols(dt.Columns.Count) As String
+        For i As Integer = 0 To dt.Columns.Count - 1
+            _columnstr &= dt.Columns(i).ColumnName & ","
+            cols(i) = dt.Columns(i).ColumnName
+        Next
+
+        For Each row As DataRow In dt.Rows
+            For i As Integer = 0 To dt.Columns.Count - 1
+                If IsDBNull(row(cols(i))) Then
+                    _valuestr &= "NULL,"
+                Else
+                    _params.add(row(cols(i)))
+
+                    _valuestr &= _params.getLatestParameterName & ","
+                End If
+
+            Next
+            _valuestr = _valuestr.Substring(0, _valuestr.Length - 1)
+            _valuestr &= "),("
+        Next
+
+        _valuestr = _valuestr.Substring(0, _valuestr.Length - 3)
         _columnstr = _columnstr.Substring(0, _columnstr.Length - 1)
         Return Me
     End Function
