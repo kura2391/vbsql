@@ -4,13 +4,23 @@ Public Class Update
 
     Private _where As New Where()
 
+    'save set sentences 
+    Private _set As String
+
+    'save parameter
+    Private _params As Parameters
+
     Public Sub New(connection As Connection)
         MyBase.New(connection)
-        _prefix = "@set"
+
+        _set = ""
+        _params = New Parameters("@set")
     End Sub
     Public Sub New(connectionString As String)
         MyBase.New(connectionString)
-        _prefix = "@set"
+
+        _set = ""
+        _params = New Parameters("@set")
     End Sub
 
 
@@ -19,75 +29,55 @@ Public Class Update
         Return Me
     End Function
 
-    Public Function [set](parameterList As List(Of Parameter)) As Update
-        _variables.AddRange(parameterList)
-        Return Me
-    End Function
 
-    'more easier set function
-    Public Function [set](parameterList As Dictionary(Of String, String)) As Update
-        Dim param As New List(Of Parameter)
-        For Each key As String In parameterList.Keys
-            param.Add(New Parameter(key, parameterList(key)))
+    Public Function [set](ht As Hashtable) As Update
+        If _set <> "" Then
+            _set &= ","
+        End If
+        For Each col As String In ht.Keys
+            If IsDBNull(ht(col)) Then
+                _set &= col & "=NULL,"
+            Else
+                _params.add(ht(col))
+                _set &= col & "=" & _params.getLatestParameterName & ","
+            End If
+
         Next
-        Return [set](param)
+
+        _set = _set.Substring(0, _set.Length - 1)
+        Return Me
     End Function
 
     'set where
-    Public Function where(conditions As String, col As Parameter()) As Update
-        _where.add(conditions, col)
-        Return Me
-    End Function
-    Public Function where(conditions As String, col() As String) As Update
-        _where.add(conditions, col)
+    Public Function where(conditions As String, Optional ByVal col() As String = Nothing) As Update
+        _where.add(conditions, param:=col)
         Return Me
     End Function
 
 
     'execute sql and return integer 
     Public Function execute() As Integer
-        check()
-        setParameterName()
         Return _connection.execute(buildSql(), buildParameter())
     End Function
 
     '
     Function buildSql() As String
         Dim sql As String = "UPDATE " & _table & " SET "
-        For i As Integer = 0 To _variables.Count() - 1 Step 1
-            sql &= "" & _variables(i).getColumnName & " = " & _variables(i).getParameterName & ","
-        Next
-        sql = sql.Substring(0, sql.Length - 1)
+        sql &= _set
+
         If Not _where.isEmpty() Then
-            sql &= " WHERE " & _where.sql()
+            sql &= " WHERE " & _where.getSql()
         End If
         Return sql
     End Function
 
     Private Function buildParameter() As SqlClient.SqlParameter()
         Dim p As New List(Of SqlClient.SqlParameter)
-        For i As Integer = 0 To _variables.Count - 1
-            p.Add(_variables(i).getSqlParameter)
-        Next
+        p.AddRange(_params.getParamsArray)
         p.AddRange(_where.getParamList)
 
         Return p.ToArray()
     End Function
-
-
-    Public Sub check()
-        checkUpdate()
-        checkConnection()
-        checkTable()
-    End Sub
-
-    'if _from is not set, throw error
-    Private Sub checkUpdate()
-        If _table.Trim() = "" Then
-            Throw New Exception("no table selected")
-        End If
-    End Sub
-
 
 End Class
 

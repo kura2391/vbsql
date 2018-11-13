@@ -5,15 +5,27 @@ Public Class Insert
     'save lastinsertid
     Private _lastInsertId As Boolean = False
 
+    'save string of value and columns
+    Private _columnstr As String = Nothing
+    Private _valuestr As String = Nothing
+
+    'if values(dt as datatable) is used, check flag to override the columnstr by value(ht as hashtable) 
+
+    Private _params As Parameters
 
     Public Sub New(connection As Connection)
         MyBase.New(connection)
-        _prefix = "@insert"
+        _columnstr = ""
+        _valuestr = ""
+
+        _params = New Parameters("@insert")
     End Sub
 
     Public Sub New(connectionString As String)
         MyBase.New(connectionString)
-        _prefix = "@insert"
+        _columnstr = ""
+        _valuestr = ""
+        _params = New Parameters("@insert")
     End Sub
 
 
@@ -23,18 +35,60 @@ Public Class Insert
         Return Me
     End Function
 
-    'set insertdata
-    Public Function values(ByVal paramList As List(Of Parameter)) As Insert
-        _variables = New List(Of Parameter)(paramList)
+    ''set insertdata
+    Public Function value(ht As Hashtable) As Insert
+        _columnstr = ""
+        _valuestr = ""
+        _params.clear()
+
+        For Each col As String In ht.Keys
+
+            _columnstr &= col & ","
+
+            If IsDBNull(ht(col)) Then
+                _valuestr &= "NULL,"
+            Else
+                _params.add(ht(col))
+                _valuestr &= _params.getLatestParameterName & ","
+            End If
+
+        Next
+
+        _valuestr = _valuestr.Substring(0, _valuestr.Length - 1)
+        _columnstr = _columnstr.Substring(0, _columnstr.Length - 1)
         Return Me
     End Function
 
-    Public Function values(paramList As Dictionary(Of String, String)) As Insert
-        Dim param As New List(Of Parameter)
-        For Each key As String In paramList.Keys
-            param.Add(New Parameter(key, paramList(key)))
+    'values
+    Public Function values(dt As DataTable) As Insert
+        _columnstr = ""
+        _valuestr = ""
+        _params.clear()
+
+        Dim cols(dt.Columns.Count) As String
+        For i As Integer = 0 To dt.Columns.Count - 1
+            _columnstr &= dt.Columns(i).ColumnName & ","
+            cols(i) = dt.Columns(i).ColumnName
         Next
-        Return values(param)
+
+        For Each row As DataRow In dt.Rows
+            For i As Integer = 0 To dt.Columns.Count - 1
+                If IsDBNull(row(cols(i))) Then
+                    _valuestr &= "NULL,"
+                Else
+                    _params.add(row(cols(i)))
+
+                    _valuestr &= _params.getLatestParameterName & ","
+                End If
+
+            Next
+            _valuestr = _valuestr.Substring(0, _valuestr.Length - 1)
+            _valuestr &= "),("
+        Next
+
+        _valuestr = _valuestr.Substring(0, _valuestr.Length - 3)
+        _columnstr = _columnstr.Substring(0, _columnstr.Length - 1)
+        Return Me
     End Function
 
     'set lastInsertId
@@ -46,8 +100,8 @@ Public Class Insert
 
     'execute sql and return integer 
     Public Function execute() As Integer
-        check()
-        setParameterName()
+        'check()
+
         Return _connection.execute(buildSql(), buildParameter())
     End Function
 
@@ -55,13 +109,9 @@ Public Class Insert
     Private Function buildSql()
 
         Dim sql As String = "INSERT INTO " & _table & " ("
-        Dim values As String = ""
-        For i As Integer = 0 To _variables.Count - 1
-            sql &= " " & _variables(i).getColumnName & " ,"
-            values &= " " & _variables(i).getParameterName & " ,"
-        Next
-        sql = sql.Substring(0, sql.Length - 1) & ") VALUES ("
-        sql &= values.Substring(0, values.Length - 1) & ")"
+
+        sql &= _columnstr & ") VALUES ("
+        sql &= _valuestr & ")"
 
         If _lastInsertId Then
             sql &= "SELECT SCOPE_IDENTITY();"
@@ -70,18 +120,9 @@ Public Class Insert
     End Function
 
     Public Function buildParameter() As SqlClient.SqlParameter()
-        Dim p As New List(Of SqlClient.SqlParameter)
-        For i As Integer = 0 To _variables.Count - 1
-            p.Add(_variables(i).getSqlParameter)
-        Next
-        Return p.ToArray()
+        Return _params.getParamsArray
     End Function
 
-    Private Sub check()
-        checkTable()
-        checkVariables()
-        MyBase.checkConnection()
-    End Sub
 
 
 End Class
