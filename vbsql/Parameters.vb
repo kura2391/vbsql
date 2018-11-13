@@ -27,4 +27,8 @@
         Return _params.ToArray()
     End Function
 
+    Public Sub clear()
+        _params.Clear()
+    End Sub
+
 End Class
