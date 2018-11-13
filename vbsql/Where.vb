@@ -30,9 +30,12 @@ Public Class Where
     Friend Function getSql() As String
         Dim array As SqlClient.SqlParameter() = _params.getParamsArray
         Dim ans As String = _sql
-
+        Dim start As Integer = ans.IndexOf("?")
+        Dim after As Integer = 0
         For i As Integer = 0 To array.Length - 1
-            ans = Replace(ans, "?", array(i).ParameterName, Count:=1)
+            after = ans.IndexOf("?", start)
+            ans = Replace(ans, "?", array(i).ParameterName, Count:=1, Start:=start)
+            start = after
         Next
 
         Return ans
