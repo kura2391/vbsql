@@ -48,6 +48,22 @@ Public Class Update
         Return Me
     End Function
 
+
+    Public Function [set](columnName As String, value As Object) As Update
+        If _set <> "" Then
+            _set &= ","
+        End If
+
+        If IsDBNull(value) Then
+            _set &= columnName & "=" & value
+        Else
+            _params.add(value)
+            _set &= columnName & "=" & _params.getLatestParameterName
+        End If
+
+        Return Me
+    End Function
+
     'set where
     Public Function where(conditions As String, Optional ByVal col() As String = Nothing) As Update
         _where.add(conditions, param:=col)

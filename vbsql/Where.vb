@@ -29,14 +29,17 @@ Public Class Where
     'build and get sql
     Friend Function getSql() As String
         Dim array As SqlClient.SqlParameter() = _params.getParamsArray
-        Dim ans As String = _sql
-        Dim start As Integer = ans.IndexOf("?")
-        Dim after As Integer = 0
-        For i As Integer = 0 To array.Length - 1
-            after = ans.IndexOf("?", start)
-            ans = Replace(ans, "?", array(i).ParameterName, Count:=1, Start:=start)
-            start = after
+        Dim ans As String = ""
+        Dim find As Integer
+        Dim start As Integer = 0
+        For i As Integer = 0 To array.Count - 1
+            find = _sql.IndexOf("?", start)
+            ans &= _sql.Substring(start, find - start) & array(i).ParameterName
+            start = find + 1
         Next
+        If start < _sql.Length Then
+            ans &= _sql.Substring(start)
+        End If
 
         Return ans
     End Function

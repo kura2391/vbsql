@@ -59,6 +59,24 @@ Public Class Insert
         Return Me
     End Function
 
+    Public Function value(columnName As String, data As Object) As Insert
+
+        If _columnstr <> "" Then
+            _columnstr &= ","
+            _valuestr &= ","
+        End If
+        _columnstr &= columnName
+        If IsDBNull(data) Then
+            _valuestr &= "NULL"
+        Else
+            _params.add(data)
+            _valuestr &= _params.getLatestParameterName
+        End If
+
+        Return Me
+    End Function
+
+
     'values
     Public Function values(dt As DataTable) As Insert
         _columnstr = ""
