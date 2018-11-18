@@ -13,6 +13,7 @@ Public Class [Select]
     Private _where As New Where()
     Private _order As String = ""
     Private _join As New List(Of String)
+    Private _groupBy As String = ""
 
     Public Sub New(connection As Connection)
         MyBase.New(connection)
@@ -72,6 +73,11 @@ Public Class [Select]
         Return Me
     End Function
 
+    'set groupby
+    Public Function groupBy(group As String) As [Select]
+        _groupBy &= group
+        Return Me
+    End Function
 
 
     'execute sql and get data as DataTable
@@ -87,7 +93,7 @@ Public Class [Select]
 
         sql &= " FROM " & _table
 
-        sql &= " "
+        sql &= ""
         If _join.Count <> 0 Then
             For Each s As String In _join
                 sql &= s
@@ -97,7 +103,11 @@ Public Class [Select]
             sql &= " WHERE "
             sql &= _where.getSql()
         End If
-        If Not IsNothing(_order) Then
+        If _groupBy <> "" Then
+            sql &= " GROUP BY "
+            sql &= _groupBy
+        End If
+        If _order <> "" Then
             sql &= " ORDER BY "
             sql &= _order
         End If
@@ -107,7 +117,7 @@ Public Class [Select]
     Private Function buildParameter() As SqlClient.SqlParameter()
         Dim p As New List(Of SqlClient.SqlParameter)
 
-        p.AddRange(_where.getParamList().ToArray())
+        p.AddRange(_where.getParamList())
 
         Return p.ToArray()
     End Function
