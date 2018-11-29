@@ -43,4 +43,26 @@
         da.Fill(dt)
         Return dt
     End Function
+
+
+    'select
+    Public Function [select](table As String, columns As String()) As [Select]
+
+        Return New [Select](Me).select(columns).from(table)
+    End Function
+
+    'insert
+    Public Function insert(table As String) As Insert
+        Return New Insert(Me).into(table)
+    End Function
+
+    'update
+    Public Function Update(table As String) As Update
+        Return New Update(Me).table(table)
+    End Function
+
+    'delete
+    Public Function Delete(table As String) As Delete
+        Return New Delete(Me).from(table)
+    End Function
 End Class
